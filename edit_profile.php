@@ -30,7 +30,26 @@ function uploadFile($inputName,$folder)
     {
         $filename=time()."_".basename($_FILES[$inputName]['name']);
 
+        if(!is_dir("../assets/uploads/".$folder))
+{
+    mkdir("../assets/uploads/".$folder,0777,true);
+}
+
         $target="../assets/uploads/".$folder."/".$filename;
+
+        $allowed=['pdf','jpg','jpeg','png'];
+
+$ext=strtolower(pathinfo($_FILES[$inputName]['name'],PATHINFO_EXTENSION));
+
+if(!in_array($ext,$allowed))
+{
+die("Invalid File Type");
+}
+
+if($_FILES[$inputName]['size']>2097152)
+{
+die("Maximum 2MB File Allowed");
+}
 
         move_uploaded_file($_FILES[$inputName]['tmp_name'],$target);
 
@@ -43,16 +62,86 @@ function uploadFile($inputName,$folder)
 if(isset($_POST['update']))
 {
 
-$name=$_POST['name'];
-$email=$_POST['email'];
+    $name = trim($_POST['name']);
+
+$email = strtolower(trim($_POST['email']));
+
+
+if(!preg_match("/^[A-Za-z ]+$/",$name))
+{
+    die("Invalid Name");
+}
+
+
+if(!preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in|org)$/",$email))
+{
+    die("Invalid Email Format");
+}
+
+if(!preg_match("/^[6-9][0-9]{9}$/",$_POST['mobile']))
+{
+    die("Invalid Mobile Number");
+}
+
+
+
+if(!preg_match("/^[6-9][0-9]{9}$/",$_POST['father_mobile']))
+{
+    die("Invalid Father Mobile Number");
+}
+
+if(!preg_match("/^[6-9][0-9]{9}$/",$_POST['mother_mobile']))
+{
+    die("Invalid Mother Mobile Number");
+}
+
+if(!preg_match("/^[6-9][0-9]{9}$/", $_POST['emergency_mobile']))
+{
+    die("Invalid Emergency Contact");
+}
+
+if(!preg_match("/^[0-9]{12,20}$/",$_POST['abc']))
+{
+    die("Invalid ABC ID");
+}
+
+if(!preg_match("/^[0-9]{6}$/",$_POST['pincode']))
+{
+    die("Invalid Pincode");
+}
+
+if(!preg_match("/^[A-Za-z ]+$/",$_POST['father']))
+{
+    die("Invalid Father Name");
+}
+
+if(!preg_match("/^[A-Za-z ]+$/",$_POST['mother']))
+{
+    die("Invalid Mother Name");
+}
+
+if(!preg_match("/^[A-Za-z .-]+$/",$_POST['father_occupation']))
+{
+    die("Invalid Father Occupation");
+}
+
+if(!preg_match("/^[A-Za-z .-]+$/",$_POST['mother_occupation']))
+{
+    die("Invalid Mother Occupation");
+}
+
 
 $dob = $_POST['dob'] ?? $student['dob'];
+if(strtotime($dob)>time())
+{
+die("Future Date Not Allowed");
+}
 $gender = $_POST['gender'] ?? $student['gender'];
 $blood = $_POST['blood'] ?? $student['blood_group'];
 
 $mobile = $_POST['mobile'] ?? $student['mobile'];
 
-$aadhaar = $_POST['aadhaar'] ?? $student['aadhaar_no'];
+$_POST['abc'] = str_replace(' ','',$_POST['abc']);
 $abc = $_POST['abc'] ?? $student['abc_id'];
 
 $address = $_POST['address'] ?? $student['address'];
@@ -67,14 +156,12 @@ $father_mobile = $_POST['father_mobile'] ?? $student['father_mobile'];
 $mother = $_POST['mother'] ?? $student['mother_name'];
 $mother_mobile = $_POST['mother_mobile'] ?? $student['mother_mobile'];
 
-$guardian = $_POST['guardian'] ?? $student['guardian_name'];
-$guardian_relation = $_POST['guardian_relation'] ?? $student['guardian_relation'];
-$guardian_mobile = $_POST['guardian_mobile'] ?? $student['guardian_mobile'];
-$guardian_email = $_POST['guardian_email'] ?? $student['guardian_email'];
-$guardian_occupation = $_POST['guardian_occupation'] ?? $student['guardian_occupation'];
+$father_occupation = $_POST['father_occupation'] ?? $student['father_occupation'];
+$mother_occupation = $_POST['mother_occupation'] ?? $student['mother_occupation'];
+
 
 $medical = $_POST['medical'] ?? $student['medical_condition'];
-$emergency = $_POST['emergency'] ?? $student['emergency_contact'];
+$emergency = $_POST['emergency_mobile'] ?? $student['emergency_contact'];
 
 $photo=uploadFile("photo","photos");
 $aadhaar_file=uploadFile("aadhaar_file","aadhaar");
@@ -104,7 +191,6 @@ dob='$dob',
 gender='$gender',
 blood_group='$blood',
 
-aadhaar_no='$aadhaar',
 abc_id='$abc',
 
 address='$address',
@@ -114,15 +200,11 @@ pincode='$pincode',
 
 father_name='$father',
 father_mobile='$father_mobile',
+father_occupation='$father_occupation',
 
 mother_name='$mother',
 mother_mobile='$mother_mobile',
-
-guardian_name='$guardian',
-guardian_relation='$guardian_relation',
-guardian_mobile='$guardian_mobile',
-guardian_email='$guardian_email',
-guardian_occupation='$guardian_occupation',
+mother_occupation='$mother_occupation',
 
 medical_condition='$medical',
 emergency_contact='$emergency'";
@@ -246,118 +328,324 @@ button:hover{
 
 
 <label>Name</label>
-<input type="text" name="name"
-value="<?php echo $student['name']; ?>">
-
-
-<label>Roll Number</label>
-
-<input type="text" 
-value="IT1216"
-readonly>
+<input
+type="text"
+name="name"
+value="<?php echo htmlspecialchars($student['name']); ?>"
+required
+maxlength="50"
+pattern="[A-Za-z ]+"
+oninput="this.value=this.value.replace(/[^A-Za-z ]/g,'')"
+title="Only alphabets and spaces allowed">
 
 
 <label>Email</label>
-<input type="email" name="email"
-value="<?php echo $student['email']; ?>">
 
+
+<input
+type="email"
+name="email"
+value="<?php echo htmlspecialchars($student['email']); ?>"
+required
+maxlength="100"
+pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+oninput="this.value=this.value.replace(/\s/g,'')"
+title="Enter Valid Email Address"
+>
 
 
 <label>Mobile</label>
 
-<input type="text" name="mobile"
-value="<?php echo $student['mobile']; ?>">
+<input
+type="tel"
+name="mobile"
+value="<?php echo htmlspecialchars($student['mobile']); ?>"
+required
+maxlength="10"
+pattern="[6-9]{1}[0-9]{9}"
+inputmode="numeric"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
 
 <label>Address</label>
 
-<textarea name="address">
+<textarea
+name="address"
+required
+maxlength="250"><?php echo htmlspecialchars($student['address']); ?></textarea>
 
-<?php echo $student['address']; ?>
-
-</textarea>
 <label>ABC ID</label>
 
-<input type="text" name="abc"
-value="<?php echo $student['abc_id']; ?>">
+<input
+type="text"
+name="abc"
+value="<?php echo htmlspecialchars($student['abc_id']); ?>"
+maxlength="20"
+required
+pattern="[0-9]{12,20}"
+inputmode="numeric"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+title="ABC ID must contain 12 to 20 digits">
+
+<label>City</label>
+
+<select name="city" id="city" required>
+
+<option value="">Select City</option>
+
+</select>
+
+<label>State</label>
+
+<select name="state" id="state" required>
+
+<option value="">Select State</option>
+
+<option value="Maharashtra" <?php if($student['state']=="Maharashtra") echo "selected"; ?>>
+Maharashtra
+</option>
+
+<option value="Gujarat" <?php if($student['state']=="Gujarat") echo "selected"; ?>>
+Gujarat
+</option>
+
+<option value="Rajasthan" <?php if($student['state']=="Rajasthan") echo "selected"; ?>>
+Rajasthan
+</option>
+
+<option value="Karnataka" <?php if($student['state']=="Karnataka") echo "selected"; ?>>
+Karnataka
+</option>
+
+<option value="Goa" <?php if($student['state']=="Goa") echo "selected"; ?>>
+Goa
+</option>
+
+<option value="Delhi" <?php if($student['state']=="Delhi") echo "selected"; ?>>
+Delhi
+</option>
+
+</select>
+
+<label>Pincode</label>
+
+<input
+type="text"
+name="pincode"
+value="<?php echo htmlspecialchars($student['pincode']); ?>"
+required
+maxlength="6"
+pattern="[0-9]{6}"
+inputmode="numeric"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
 <label>Date of Birth</label>
-<input type="date" name="dob"
-value="<?php echo $student['dob']; ?>">
 
+
+<input
+type="date"
+name="dob"
+value="<?php echo htmlspecialchars($student['dob']); ?>">
 
 <label>Gender</label>
-<input type="text" name="gender"
-value="<?php echo $student['gender']; ?>">
 
+<select name="gender" required>
 
-<label>Blood Group</label>
-<input type="text" name="blood"
-value="<?php echo $student['blood_group']; ?>">
+<option value="">Select Gender</option>
 
-<label>Aadhaar Number</label>
+<option value="Male"
+<?php if($student['gender']=="Male") echo "selected"; ?>>
+Male
+</option>
 
-<input type="text" name="aadhaar"
-value="<?php echo $student['aadhaar_no']; ?>">
+<option value="Female"
+<?php if($student['gender']=="Female") echo "selected"; ?>>
+Female
+</option>
 
+<option value="Other"
+<?php if($student['gender']=="Other") echo "selected"; ?>>
+Other
+</option>
+
+</select>
+
+<select name="blood" required>
+
+<option value="">Select Blood Group</option>
+
+<option value="A+" <?php if($student['blood_group']=="A+") echo "selected"; ?>>A+</option>
+
+<option value="A-" <?php if($student['blood_group']=="A-") echo "selected"; ?>>A-</option>
+
+<option value="B+" <?php if($student['blood_group']=="B+") echo "selected"; ?>>B+</option>
+
+<option value="B-" <?php if($student['blood_group']=="B-") echo "selected"; ?>>B-</option>
+
+<option value="AB+" <?php if($student['blood_group']=="AB+") echo "selected"; ?>>AB+</option>
+
+<option value="AB-" <?php if($student['blood_group']=="AB-") echo "selected"; ?>>AB-</option>
+
+<option value="O+" <?php if($student['blood_group']=="O+") echo "selected"; ?>>O+</option>
+
+<option value="O-" <?php if($student['blood_group']=="O-") echo "selected"; ?>>O-</option>
+
+</select>
 
 
 <label>Father Name</label>
 
-<input type="text" name="father"
-value="<?php echo $student['father_name']; ?>">
+<input
+type="text"
+name="father"
+value="<?php echo htmlspecialchars($student['father_name']); ?>"
+required
+maxlength="50"
+pattern="[A-Za-z ]+"
+oninput="this.value=this.value.replace(/[^A-Za-z ]/g,'')">
 
+
+<label>Father Mobile</label>
+
+<input
+type="tel"
+name="father_mobile"
+value="<?php echo htmlspecialchars($student['father_mobile']); ?>"
+required
+maxlength="10"
+pattern="[6-9]{1}[0-9]{9}"
+inputmode="numeric"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+
+<label>Father Occupation</label>
+
+<input
+type="text"
+name="father_occupation"
+value="<?php echo htmlspecialchars($student['father_occupation']); ?>"
+required
+maxlength="40"
+pattern="[A-Za-z .-]+"
+oninput="this.value=this.value.replace(/[^A-Za-z .-]/g,'')">
 
 
 <label>Mother Name</label>
 
-<input type="text" name="mother"
-value="<?php echo $student['mother_name']; ?>">
+<input
+type="text"
+name="mother"
+value="<?php echo htmlspecialchars($student['mother_name']); ?>"
+required
+maxlength="50"
+pattern="[A-Za-z ]+"
+oninput="this.value=this.value.replace(/[^A-Za-z ]/g,'')">
 
 
+<label>Mother Mobile</label>
+
+<input
+type="tel"
+name="mother_mobile"
+value="<?php echo htmlspecialchars($student['mother_mobile']); ?>"
+required
+maxlength="10"
+pattern="[6-9]{1}[0-9]{9}"
+inputmode="numeric"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+<label>Mother Occupation</label>
+
+<input
+type="text"
+name="mother_occupation"
+value="<?php echo htmlspecialchars($student['mother_occupation']); ?>"
+required
+maxlength="40"
+pattern="[A-Za-z .-]+"
+oninput="this.value=this.value.replace(/[^A-Za-z .-]/g,'')">
+
+<h2>Medical Information</h2>
+
+<label>Medical Condition</label>
+
+<select name="medical" required>
+
+<option value="None" <?php if($student['medical_condition']=="None") echo "selected"; ?>>None</option>
+
+<option value="Asthma" <?php if($student['medical_condition']=="Asthma") echo "selected"; ?>>Asthma</option>
+
+<option value="Diabetes" <?php if($student['medical_condition']=="Diabetes") echo "selected"; ?>>Diabetes</option>
+
+<option value="Heart Disease" <?php if($student['medical_condition']=="Heart Disease") echo "selected"; ?>>Heart Disease</option>
+
+<option value="Blood Pressure" <?php if($student['medical_condition']=="Blood Pressure") echo "selected"; ?>>Blood Pressure</option>
+
+<option value="Other" <?php if($student['medical_condition']=="Other") echo "selected"; ?>>Other</option>
+
+</select>
+
+<label>Emergency Contact</label>
+
+<input
+type="tel"
+name="emergency_mobile"
+value="<?php echo htmlspecialchars($student['emergency_contact']); ?>"
+required
+maxlength="10"
+pattern="[6-9]{1}[0-9]{9}"
+inputmode="numeric"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
 <h2>Upload Documents</h2>
 
 
 <label>Aadhaar PDF</label>
 
-<input type="file" name="aadhaar_file">
-
+<input
+type="file"
+name="aadhaar_file"
+accept=".pdf,.jpg,.jpeg,.png">
 
 
 <label>PAN PDF</label>
 
-<input type="file" name="pan_file">
+<input type="file" name="pan_file" accept=".pdf,.jpg,.jpeg,.png">
 
 
 
 <label>SSC Marksheet</label>
 
-<input type="file" name="ssc_file">
+<input type="file" name="ssc_file" accept=".pdf,.jpg,.jpeg,.png">
+
 
 <label>HSC Marksheet</label>
-<input type="file" name="hsc_file">
 
+<input type="file" name="hsc_file" accept=".pdf,.jpg,.jpeg,.png">
 
 <label>Leaving Certificate</label>
-<input type="file" name="lc_file">
+
+<input type="file" name="lc_file" accept=".pdf,.jpg,.jpeg,.png">
 
 
 <label>Caste Certificate</label>
-<input type="file" name="caste_file">
+
+<input type="file" name="caste_file" accept=".pdf,.jpg,.jpeg,.png">
 
 
 <label>Income Certificate</label>
-<input type="file" name="income_file">
+
+<input type="file" name="income_file" accept=".pdf,.jpg,.jpeg,.png">
 
 
 <label>Domicile Certificate</label>
-<input type="file" name="domicile_file">
+
+<input type="file" name="domicile_file" accept=".pdf,.jpg,.jpeg,.png">
 
 
 <label>Fee Receipt</label>
-<input type="file" name="receipt_file">
 
+<input type="file" name="receipt_file" accept=".pdf,.jpg,.jpeg,.png">
 
 
 <br><br>
@@ -376,6 +664,101 @@ Update Profile
 
 
 </div>
+
+<script>
+
+let cities = {
+
+"Maharashtra":[
+"Pune",
+"Mumbai",
+"Nashik",
+"Nagpur"
+],
+
+"Gujarat":[
+"Ahmedabad",
+"Surat",
+"Vadodara",
+"Rajkot",
+"Gandhinagar"
+],
+
+"Rajasthan":[
+"Jaipur",
+"Jodhpur",
+"Kota",
+"Udaipur"
+],
+
+"Karnataka":[
+"Bangalore",
+"Mysore",
+"Mangalore"
+],
+
+"Goa":[
+"Panaji",
+"Margao"
+],
+
+"Delhi":[
+"New Delhi"
+]
+
+};
+
+
+let state=document.getElementById("state");
+let city=document.getElementById("city");
+
+
+function loadCities(selectedCity="")
+{
+
+city.innerHTML='<option value="">Select City</option>';
+
+let list=cities[state.value];
+
+
+if(list)
+{
+list.forEach(function(item){
+
+let option=document.createElement("option");
+
+option.value=item;
+option.text=item;
+
+
+if(item=="<?php echo $student['city']; ?>")
+{
+option.selected=true;
+}
+
+
+city.appendChild(option);
+
+
+});
+
+}
+
+}
+
+
+state.addEventListener("change",function(){
+
+loadCities();
+
+});
+
+
+// page load pe city show karega
+
+loadCities();
+
+</script>
 
 
 </body>
